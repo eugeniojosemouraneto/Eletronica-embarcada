@@ -46,7 +46,6 @@
 2. Motores DC — comportamento em corrente máxima
     - Curva torque × corrente, corrente de partida (stall current) e corrente contínua máxima admissível.
     - Aquecimento do motor em operação na corrente máxima e impacto na vida útil.
-    - Medição de corrente de partida e corrente sob carga.
 3. Eletrônica de potência e H-bridge robusta
     - Escolha de dispositivos: MOSFETs logic-level (N-MOS) de baixa Rds(on) ou transistores de potência.
     - Projeto de ponte H: princípio de funcionamento (2 canais por motor para frente/reverso).
@@ -165,3 +164,70 @@ Os condensadores de reserva geralmente são posicionados na entrada de energia d
 
 ## 2. Motores DC — comportamento em corrente máxima
 ### 2.1. Princípio básico de um motor
+Um motor DC converte energia elétrica em energia mecânica, em forma de rotação. Ele faz isso usando um princípio simples: quando uma corrente elétrica passa por uma bobina dentro de um campo magnético, uma força é gerada, fazendo o eixo do motor girar.
+- **Velocidade (RPM):** RPM vem de rotação por minuto, então a velocidade nada mas é que quantas vezes o eixo dá uma volta completa, o que define a velocidade do motor. Este é controlada diretamente pela tensão (V), ou seja, quanto maior a tensão fornecida ao motor, maior será sua velocidade.
+- **Torque:** é a força de rotação, ou em outras palavras, a capacidade do motor de fazer força. Você pode pensar no torque como a força que o motor aplica para girar uma carga.
+- **Corrente (A):**  é a quantidade de energia elétrica que o motor está consumindo.
+
+### 2.2. Relação fundamental: torque é proporcional à corrente
+> O torque que um motor DC produz é diretamente proporcional à corrente elétrica que ele consome, ou seja:
+> - se o motor precisa fazer pouca força, ele girar livremente, ele vai ter que consumir pouca corrente, já que o torque dele está baixo.
+> - se o motor precisa fazer muita força, como subindo uma rampa ou levantando um peso, ele vai consumir muita corrente.
+
+Acreve que, esta relação é praticamente linear, o que nos leva à curva torque x corrente.
+
+### 2.3. Os dois extremos de operação (que definem a curva)
+### 2.3.1. Cenário 1: Rotação Livre (No-Load)
+O motor está ligado, mas não há nada conectado ao seu eixo. Ele gira o mais rápido e livremente possivel. <br>
+Onde a sua velocidade estará no máximo, o torque estará no mínimo, a corrente será mínima.
+
+### 2.3.2. Cenário 2: Motor travado (Stall) - A corrente máxima
+A energia está aplicada ao motor, mas seu eixo está completamente travado e impedido de girar. <br>
+Onde a sua velocidade é zero, o torque do motor estará no máximo, a corrente estará no máximo.
+
+### 2.4. A curva torque x corrente
+O gráfico que relaciona essas duas grandezas é uma linha reta. Onde os seus eixos são:
+- Eixo Y - torque
+- Eixo X - corrente
+
+1. O gráfico começa no Ponto de Rotação livre, onde a corrente é muito baixa e torque muito baixo.
+2. À medida que você aplica uma carga no eixo do motor, ele precisa de mais torque para continuar girando. Para gerar esse torque, ele automaticamente puxa mais corrente da fonte.
+3. A linha sobe de forma reta até atingir o Ponto de Stall, onde o motor está aplicando o seu torque máximo e, para isso, consome sua corrente máxima.
+
+### 2.5. Corrente de Partida (Stall Current) - O ponto crítico da curva torque x corrente
+A **corrente de partida ($Istall$)** é a corrente máxima que um motor DC consome quando a tensão nominal (voltagem específica em que um equipamento elétrico ou cabo é projetado para operar de forma segura e eficiente)  é aplicada, mas seu eixo está completamente travado e impedido de girar. <br>
+Ou seja, é o ponto mais extremo da curva de torque x corrente, onde o torque é máximo e a velocidade é zero.
+
+### 2.6. Corrente contínua máxima admissível
+A **corrente contínua máxima admissível** é a mior corrente que um motor DC pode consumir indefinidamente sem superaquecer e sofrer danos permanentes, enquanto ainda está produzindo torque. Onde é a corrente correspondente ao torque contínuo máximo admissível. <br>
+A diferença entre a corrente de partida e corrente contínua máxima admissível:
+- Corrente de partida: é o pico máximo de corrente e torque (velocidade zero), onde tem duração apenas por  alguns segundos ou milissegundos é tolerável sem danificar o motor.
+- Corrente contínua máxima admissível: é um ponto abaixo do Stall, onde o motor ainda está girando, mas sob uma carga pesada, onde pode ser mantido indefinidamente sem danificar o motor.
+
+### 2.7. Aquecimento do motor em operação na corrente máxima e impacto na vida útil
+Quando um motor DC está operante ele converte parte da energia elétrica recebida em energia mecânica e uma parte considerável em calor. Onde esté calor é um subproduto inevitável da sua operação. <br>
+### 2.7.1. Principais fontes de aquecimento na operação de motores DC 
+- **Efeito Joule:** a mais significante delas, onde a corrente elétrica ($I$) que flui pelas bobinas do motor é dissipada parte dela em forma de calor pela potência elétrica do motor ($Pcalor = I^2 * Rmotor$). Onde, quanto maior a corrente que passa pelo motor, maior será o calor gerado, e de forma exponencial (dobro da corrente =  quadriplo de calor).
+- **Perdas por fricção:** atrito nos rolamentos ou buchas e nas escovas geram calor.
+- **Perdas no núcleo (Ferro):** em motores com núcleo de ferro, há perdas por histerese e correntes parasitas que também geram calor.
+
+### 2.7.2. Corrente máxima e aquecimento
+Quando o motor opera na corrente máxima:
+- **Corrente de partida (Stall Current):** gera a quantidade máxima e mais  rápida de calor. Como a corrente é altíssima e o motor não está girando, o que provoca na ausencia de ventilação interna, o calor se acumula muito rápido.
+- **Corrente contínua máxima admissível:** representa o ponto em que o calor gerado ($I^2 * R$) é igual ou ligeiramente menor do que a capacidade do motor de dissipar esse calor para o ambiente. Onde o motor atinge uma uma temperatura de equilíbrio, entretanto está temperatura está próxima do limite seguro dos seus materiais.
+
+### 2.7.3. Impacto do aquecimento na vida útil do motor
+O calor é um dos principais fatores de redução do tempo de vida útil dos motores elétricos, onde a temperatura elevada acelera a degradação dos mateiriais críticos do motor.
+
+## 3. Eletrônica de potência e H-bridge robusta
+
+### Transistor
+Um **transistor** é um dispositivo semicondutor que pode atuar como um interruptor eletrônico (liga/desliga) ou como um amplificador de sinal.
+
+> **Os dois modos de operação de um transistor:**
+> - **Transistor como um interruptor eletrônico:** Um pequeno sinal no terminal de controle faz com que o trnaisstor "abra" completamente, permitindo que uma corrente muito maior passe por ele. Quando o sinal de controle é removido, o transistor abre o circuito e com isso impede a passagem de corrente elétrica. Pense que ele funciona abrindo ou feichando um tubo que permite a passagem de energia, com base em um estimulo energetico no seu terminal de controle.
+> - **Transistor como um amplificador de sinal:** Um pequeno sinal elétrico é aplicado ao terminal de controle. O transistor então cria uma cópia muito maior desse sinal no seu terminal de saída. Pense da seguinte forma, um sensor manda vários sinais elétricos com baixa tensão, quando o sinal chega no seu terminal de controle, ele abre fecha o circuito e o terminal de entrada com muita energia passa para o terminal de saída, quando o sinal acaba o pino de controle faz com que o circuito se abra, interrompendo a corrente.
+
+### MOSFETs logic-level (N-MOS)
+Um **MOSFET (Transistor de Efeito de Campo de Semicondutor de Óxido de Metal)** é um tipo de transistor que funciona como um interruptor controlado por tensão. Tendo 3 terminais:
+
