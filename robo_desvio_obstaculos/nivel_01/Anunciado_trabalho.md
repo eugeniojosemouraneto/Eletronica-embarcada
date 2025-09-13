@@ -46,18 +46,17 @@
 2. Motores DC — comportamento em corrente máxima
     - Curva torque × corrente, corrente de partida (stall current) e corrente contínua máxima admissível.
     - Aquecimento do motor em operação na corrente máxima e impacto na vida útil.
-3. Eletrônica de potência e H-bridge robusta
-    - Escolha de dispositivos: MOSFETs logic-level (N-MOS) de baixa Rds(on) ou transistores de potência.
+3. Eletrônica de potência e H-bridge 
+    - Escolha de dispositivos: MOSFETs logic-level (N-MOS)
     - Projeto de ponte H: princípio de funcionamento (2 canais por motor para frente/reverso).
-    - Proteções: evitar shoot-through, snubbers, diodos flyback, dissipação térmica e dissipadores.
-    - Dimensionamento de resistores de gate/base e necessidade de drivers de gate.
 4. Fonte, alimentação e proteções
     - Seleção de bateria/fonte que suporte correntes de pico e média; queda de tensão em cabos.
     - Fusíveis (rápidos vs retardados), proteção térmica e monitoramento.
     - Layout de GND e importância do GND comum entre Arduino e drivers.
     - Condensadores de desacoplamento próximos ao driver/motores e supressão EMI.
 5. ATmega328P — GPIO e registradores
-    - Mapas de pinos: PORTB, PORTC, PORTD; como usar DDRx, PORTx, PINx.
+    - Mapas de pinos: PORTB, PORTC, PORTD; 
+    - como usar DDRx, PORTx, PINx.
     - Entradas digitais com pull-up internos; leitura com mascaramento de bits.
     - Controle de enable/direction da H-bridge via pinos digitais (ex.: PORTD, PORTB).
     - Ferramentas: avr-gcc / PlatformIO / AVRDUDE; compilação bare-metal.
@@ -70,10 +69,6 @@
     - Configurar bordas de detecção (subida/descida) e habilitar globalmente (`sei()`).
     - Debounce: técnicas de hardware (RC) e software (tempo mínimo entre eventos).
     - Algoritmo de reação sugerido: sensor frontal → parar → ré X ms → girar para lado oposto Y ms.
-8. Medições e análise (corrente / térmica / sinais)
-    - Medir pico de corrente na partida (inrush) com alicate ou shunt e registrar com osciloscópio.
-    - Medir ruído na alimentação e verificar resets do ATmega; reforçar desacoplamento se necessário.
-    - Teste térmico prolongado em MOSFETs e motores (temperatura após N minutos).
 9. Integração, testes de robustez e documentação
     - Plano de testes: unitário (sensor, motor), integração (comportamento robô), regressão.
     - Execução de N repetições por cenário (ex.: 10 repetições: frente, traseira, múltiplos sensores).
@@ -164,7 +159,7 @@ Os condensadores de reserva geralmente são posicionados na entrada de energia d
 
 ## 2. Motores DC — comportamento em corrente máxima
 ### 2.1. Princípio básico de um motor
-Um motor DC converte energia elétrica em energia mecânica, em forma de rotação. Ele faz isso usando um princípio simples: quando uma corrente elétrica passa por uma bobina dentro de um campo magnético, uma força é gerada, fazendo o eixo do motor girar.
+Um motor DC converte energia elétrica em energia mecânica, em forma de rotação. Ele faz isso usando um princípio simples: quando uma corrente elétrica passa por uma bobina dentro de um campo magnético, uma força é gerada, fazendo o eixo do motor girar. Acresce que, um motor DC simples tem o sentido de rotação determinado pela direção do fluxo de corrente entre seus terminais.
 - **Velocidade (RPM):** RPM vem de rotação por minuto, então a velocidade nada mas é que quantas vezes o eixo dá uma volta completa, o que define a velocidade do motor. Este é controlada diretamente pela tensão (V), ou seja, quanto maior a tensão fornecida ao motor, maior será sua velocidade.
 - **Torque:** é a força de rotação, ou em outras palavras, a capacidade do motor de fazer força. Você pode pensar no torque como a força que o motor aplica para girar uma carga.
 - **Corrente (A):**  é a quantidade de energia elétrica que o motor está consumindo.
@@ -221,13 +216,68 @@ O calor é um dos principais fatores de redução do tempo de vida útil dos mot
 
 ## 3. Eletrônica de potência e H-bridge robusta
 
-### Transistor
+### 3.1. Transistor
 Um **transistor** é um dispositivo semicondutor que pode atuar como um interruptor eletrônico (liga/desliga) ou como um amplificador de sinal.
 
-> **Os dois modos de operação de um transistor:**
+### 3.1.1. Os dois modos de operação de um transistor:
 > - **Transistor como um interruptor eletrônico:** Um pequeno sinal no terminal de controle faz com que o trnaisstor "abra" completamente, permitindo que uma corrente muito maior passe por ele. Quando o sinal de controle é removido, o transistor abre o circuito e com isso impede a passagem de corrente elétrica. Pense que ele funciona abrindo ou feichando um tubo que permite a passagem de energia, com base em um estimulo energetico no seu terminal de controle.
 > - **Transistor como um amplificador de sinal:** Um pequeno sinal elétrico é aplicado ao terminal de controle. O transistor então cria uma cópia muito maior desse sinal no seu terminal de saída. Pense da seguinte forma, um sensor manda vários sinais elétricos com baixa tensão, quando o sinal chega no seu terminal de controle, ele abre fecha o circuito e o terminal de entrada com muita energia passa para o terminal de saída, quando o sinal acaba o pino de controle faz com que o circuito se abra, interrompendo a corrente.
 
-### MOSFETs logic-level (N-MOS)
+### 3.2. MOSFETs logic-level (N-MOS)
 Um **MOSFET (Transistor de Efeito de Campo de Semicondutor de Óxido de Metal)** é um tipo de transistor que funciona como um interruptor controlado por tensão. Tendo 3 terminais:
 
+> - **Gate (G):** é o pino de controle.
+> - **Drain (D):** é o pino de dreno, entrada de corrente
+> - **Source (S):** é o pino de fonte, saída de corrente
+
+<br>
+
+<!-- ![terminais-MOSFET](../files/terminais_mosfet.jpg) -->
+
+### 3.2.1. Funcionamento MOSFET
+1. Um MOSFET de Canal N está "ligado" (permite a passagem de corrente entre Drain e Source) quando você aplica uma tensão positiva no Gate em relação ao Source.
+2. Como o Source é quase sempre conectado ao terra (GND), basta aplicar uma tensão positiva no Gate para ligar o interruptor.
+
+### 3.2.2. Tipos de MOSFET e qual o melhor para usar com um microcontrolador
+> - **MOSFET padrão:** a maioria dos MOSFET de potência  precisa de uma tensão relativamente alta estimulando o Gate para o MOSFET ser saturado (permitir a passagem de corrente do Drain para o Source), geralmente em torno de $10-12 V(Volts)$. Acresce que, um pino do Arduino UNO (microcontrolador escolhido no projeto) pode fornecer só $5 V$, o que não seria suficiente para saturar o MOSFET padrão de forma eficiente, o que provocaria um aquecimento alto nele.
+> - **MOSFET Logic-Level:** são projetados especificamente para serem saturados com as tensões baixas dos sinais lógicos de um microcontrolador (tipicamente entre $3.3-5 V$)
+
+<br>
+
+> A melhor escolha de MOSFET para um microcontrolador é um MOSFET Logic-Level.
+
+### 3.3. Como inverter a rotação de um motor DC?
+Um motor DC simples gira em uma direção quando a corrente flui de um terminal para o outro. Para que ele gire na direção oposta, a corrente precisa fluir na direção contraria. A melhor forma de se fazer isso é utilizando uma ponte H.
+
+### 3.3.1. Ponte H
+A ***ponte H** é um circuito eletrônico que permite que uma fonte de alimentação DC seja aplicada aos terminais do motor em duas polaridades diferentes, invertendo assim a direção da corrente e, consecutivamente, a direção de rotação do eixo do motor.
+
+### 3.3.1.1. Componentes da Ponte H
+A Ponte H é contruída com 4 interruptores controlados eletronicamente:
+- **Q1, Q2, Q3, Q4:** os transistores.
+- **M:** o motor DC.
+- **VCC:** a fonte de alimentação.
+- **GND:** o terra.
+
+> **Acresce que, a chave da Ponte H é que apenas dois interruptores opostos diagonalmente podem ser ativados ao mesmo tempo para permtir o fluxo de corrente em uma direção. A ativação de outros  causaria curto-circuito.**
+
+<br>
+
+<!-- ![estados-dos-transistores-da-Ponte-H-e-o-sentido-de-rotacao-do-motor](../files/Controlando-um-motor-DC-com-driver-Ponte-H-L298N-img-blog-4.webp) -->
+
+### 3.3.1.2. Rotação para a frente (Forward)
+Para o motor girar para a frente, queremos  que a corrente flua de, por exemplo, esqueda para a direita através do motor.
+- **Interruptores ativados:**
+    - **Q1:** liga, conectando o terminal esquerdo do motor ao GND.
+    - **Q4:** loga, conectando o terminal direito do motor ao VCC.
+
+### 3.3.1.3. Rotação reversa (Reverse)
+Para o motor  girar para trás, queremos que a corrente flua da direita para a esquerda através do motor.
+- **Interruptores ativados:**
+    - **Q2:** liga, conectando o terminal direito do motor ao GND.
+    - **Q3:** loga, conectando o terminal esquerdo do motor ao VCC.
+
+### 3.3.2. Controle com Microcontrolador
+Um microcontrolador controlara a Ponte H conectando seus pinos digitais aos Gates dos MOSFETs. Para controlar um motor, você precisa de dois pinos de controle ou dois canais:
+- Pino 1: controla Q1 e Q4 (para frente).
+- Pino 2: controla Q2 e Q3 (para trás).
