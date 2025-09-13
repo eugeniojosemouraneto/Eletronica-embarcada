@@ -50,10 +50,8 @@
     - Escolha de dispositivos: MOSFETs logic-level (N-MOS)
     - Projeto de ponte H: princípio de funcionamento (2 canais por motor para frente/reverso).
 4. Fonte, alimentação e proteções
-    - Seleção de bateria/fonte que suporte correntes de pico e média; queda de tensão em cabos.
-    - Fusíveis (rápidos vs retardados), proteção térmica e monitoramento.
+    - Seleção de bateria que suporte correntes de pico e média
     - Layout de GND e importância do GND comum entre Arduino e drivers.
-    - Condensadores de desacoplamento próximos ao driver/motores e supressão EMI.
 5. ATmega328P — GPIO e registradores
     - Mapas de pinos: PORTB, PORTC, PORTD; 
     - como usar DDRx, PORTx, PINx.
@@ -214,7 +212,7 @@ Quando o motor opera na corrente máxima:
 ### 2.7.3. Impacto do aquecimento na vida útil do motor
 O calor é um dos principais fatores de redução do tempo de vida útil dos motores elétricos, onde a temperatura elevada acelera a degradação dos mateiriais críticos do motor.
 
-## 3. Eletrônica de potência e H-bridge robusta
+## 3. Eletrônica de potência e H-bridge 
 
 ### 3.1. Transistor
 Um **transistor** é um dispositivo semicondutor que pode atuar como um interruptor eletrônico (liga/desliga) ou como um amplificador de sinal.
@@ -281,3 +279,22 @@ Para o motor  girar para trás, queremos que a corrente flua da direita para a e
 Um microcontrolador controlara a Ponte H conectando seus pinos digitais aos Gates dos MOSFETs. Para controlar um motor, você precisa de dois pinos de controle ou dois canais:
 - Pino 1: controla Q1 e Q4 (para frente).
 - Pino 2: controla Q2 e Q3 (para trás).
+
+## 4. Fonte e alimentação
+### 4.1. Seleção de bateria que suporte correntes de pico e média
+### 4.1.1. Corrente média (operação normal)
+A **corrente média** é a corrente que o circuito consome quando está operando sob sua carga média ou típica. Onde ela é quem determinará o consumo total de energia ao longo do tempo. No caso deste trabalho, o cálculo estimado da corrente média vem através de medições ou específicações do motor sob carga.
+
+### 4.1.2. Corrente de pico (curta duração)
+A **corrente de pico** é referente as correntes que a sua fonte deve ser capaz de fornecer, mesmo que por um período curto de tempo.
+
+### 4.1.2.1. Corrente de partida (Stall current) do motor
+A **corrente de partida do motor** é a corrente máxima que o motor puxa quando está travado ou no momento inicial da partida (aceleração). É a maior corrente que o motor pode exigir. Onde a fonte do projeto tem que ser capaz de fornecer essa corrente momentaneamente.
+### 4.1.2.2. Corrente chaveada da ponte H e outros componentes
+A **corrente chaveada para componentes** é um pequeno pico de corrente que componentes do circuito puxam quando chaveia muito rapidamente. Embora menores esses picos, esses picos se somam e exigem uma fonte capaz de responder rapidamente.
+
+### 4.2. Layout de GND e importância do GND comum entre Arduino e drivers.
+### 4.2.1. O papel de um aterramento comum em circuitos Arduino e drivers
+Em qualquer projeto eletrônico que envolva um microcontrolador como um Arduino e componentes externos, estabelecer um aterramento adequado (GND) é fundamental para uma operação correta. <br>
+Um aterramento comum entre o Arduino e um driver é necessario, servindo como uma referência de tensão estável.
+
