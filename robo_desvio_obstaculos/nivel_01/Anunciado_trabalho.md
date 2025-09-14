@@ -452,3 +452,47 @@ void my_delay_ms(uint32_t ms) {
     while ((millis_count - start_time) < ms);
 }
 ```
+
+## 7. Interrupções, debounce e lógica de manobra
+### 7.1. Interrupção
+Quando um evento dispara é lançada uma interrupção para a CPU, que interrompira o código principal para tratar a respectiva interrupção, no fim do tratamento o código principal retorna a execultar no ponto que foi interrompido.
+
+### 7.2. Interrupções externas (INT0/INT1)
+São interrupções mais diretas vinculadas a pinos específicos e dedicados:
+- INT0: no pino PD2 (pino digital 2 do arduino).
+- INT1: no pino PD3 (pino digital 3 do arduino).
+
+### 7.3. Pin-Change Interrupts (PCINT)
+São interrupções genéricas. Quase todos os pinos de I/O do ATmega328P podem ser configurados para gerar um "Pin-Change Interrupts". Onde estes são agrupados em bancos (PCINT0 a PCINT23). <br>
+
+**Vantagens:**
+- Maior flexibilidade, visto que quase todos os pinos podem ser aplicados.
+
+**Desvantagens:**
+- Eles disparam por qualquer tipo de mudança de estado lógico. Isso implica em um código extra na escrita do ISR para descobrir quais pinos do banco mudaram e depois verificar se foi uma borda de descida ou subida.
+
+### 7.4. Debounce: filtro de ruído
+Um micro-interruptor gera vibrações ao ser prescionado. Em vez de uma única e limpa transição de Alto para Baixo, ele gera varias transições rápidas em milisegundos. <br>
+A solução é debounce na interrupção, usar um delay entre cada leitura de estados, para não sobrecarregar.
+Exemplo prático para ISR para o sensor no pino INT0.
+```cpp
+#define INTERVALO_DEBOUNCE 50 // 50ms
+volatile bool robo_colidiu = false;
+volatile unsigned long ultimo_tempo_interrupcao = 0;
+
+// Rotina de Interrupção para o sensor no pino INT0 (Pino 2)
+ISR(INT0_vect) {
+  unsigned long tempo_atual = contador_milisegundos;
+
+  // PASSO 1: Aplica o filtro de debounce
+  if (tempo_atual - ultimo_tempo_interrupcao > INTERVALO_DEBOUNCE) {
+
+    // PASSO 2: A colisão é válida! Sinaliza para o loop principal.
+    robo_colidiu = true;
+
+    // PASSO 3: Atualiza o tempo para a próxima verificação
+    ultimo_tempo_interrupcao = tempo_atual;
+  }
+  // Se o tempo não passou, a interrupção é ignorada (era só um "bounce").
+}
+```
