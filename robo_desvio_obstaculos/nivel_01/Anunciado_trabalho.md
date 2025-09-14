@@ -28,6 +28,7 @@
 - Detectar colisões e responder com movimentos adequados a colisão.
 ## Não-funcionais
 - Sem uso de funções de alto nível (`delay`, `pinMode`).
+- Os motores vão funcionar com velocidade, não deve ser feito o controle de velocidade no nível 1 do trabalho.
 
 # Materiais e componentes
 - 01x Arduino UNO 
@@ -36,7 +37,7 @@
 - Ponte H, transistores, relé, LEDs, fonte.
 
 # Arquitetura do sistema 
-<!-- ![Figura 01 - Esboço do circuito](../files/image01.jpg) -->
+<!-- ![Figura 01 - Esboço do circuito da ponte H, disparo dos transistores](../files/image01.jpg) -->
 
 # Topicos de estudo
 1. Fundamentos elétricos
@@ -58,7 +59,7 @@
     - Entradas digitais com pull-up internos; leitura com mascaramento de bits.
     - Controle de direction da H-bridge via pinos digitais (ex.: PORTD, PORTB).
 6. Timers e delays (sem `delay()`)
-    - Timers (Timer0/Timer1/Timer2): modos Normal, CTC, Fast PWM, Phase Correct.
+    - Timers (Timer0/Timer1/Timer2): modos Normal, CTC.
     - Cálculo de prescaler, OCRn, overflow e geração de timeouts/delays.
     - Implementar `delay_ms()` e timeouts de manobra sem bloqueios longos.
 7. Interrupções, debounce e lógica de manobra
@@ -350,9 +351,104 @@ Os **timers** são periféricos essenciais no ATmega328P, permitindo a execuçã
 
 ### 6.1.1. Modo Normal (Normal Mode)
 
-> O timer conta de 0 até o seu valor máximo (255 para timer de 8 bits (Timer0 e Timer2) ou 65535 para timer de 16 bits (Timer1)). Ao atingir o seu valor máximo ele estoura (overflow), retornando o seu valor para 0 e recomeçando este processo.
+> O timer conta de 0 até o seu valor máximo (255 para timer de 8 bits (Timer0 e Timer2) ou 65535 para timer de 16 bits (Timer1)). Ao atingir o seu valor máximo ele estoura (overflow), retornando o seu valor para 0 e recomeçando este processo. <br>
+
 Uma flag de interrupção de overflow (TOVx) é acionado a cada estouro, permitindo que você execulte um código especifico eem intervalos de tempo regulades.
 
 ### 6.1.2. Modo CTC (Clear Timer on Compare Match)
 
-> 
+> O timer conta de 0 até que o valor seja igual ao de um registrador especifico, o Output Compare Register (ORCnx). Quando ocorre a correspondencia de valor, o timer é  zerado e a contagem recomeça. <br>
+
+Uma flag de interrupção de comparação (OCFnx) é acionado.
+
+**Vantagens:**
+- Controle preciso sobre a frequência, já que você como desenvolvedor pode definir até quando ele vai poder contar, isso permiti ajustar a frequência  de interrupção com muita flexibilidade.
+
+### 6.2. Prescaler: O divisor de velocidade
+
+O processador no Arduino UNO o ATmega328Pm opera com um clock de $16 MHz (16.000.000 Hz)$. Isso significa que ele execulta 16 milhões de ciclos por segundo.
+
+O **prescaler** é basicamente um divisor de frequência que pega o clock principal (clock da CPU, $16 MHz$) e o torna mais lento na operação do timer. Pense no prescaler como uma escala, onde o clock do timer só tem um ciclo a cada tantos ciclos do clock principal de forma constante e proporcional. <br>
+
+> Os valores de prescaler disponiveis no ATmega328P são **1, 8, 64, 256, 1024**.
+
+> **Implicações na escolha do prescaler:**
+> - Quanto maior o valor do prescaler, menor vai ser a resolução (prescisão).
+>   - Prescaler baixo: 1, 8, 64 geram uma alta resolução, pois o timer contara rapido.
+> - Quanto menor o valor do prescaler, maior será o consumo de energia. Visto que o timer, funcionara mais que um prescaler alto.
+
+| Valor do Prescaler | Resolução (Precisão) | Alcance Máximo | Carga na CPU (Interrupções) | Ideal Para... |
+| :----------------- | :------------------- | :------------- | :-------------------------- | :------------ |
+| **Baixo** (ex: 8, 64) | **Alta** (ex: 0.5 µs) | **Curto** (ex: ~1 ms) | **Alta** (Frequentes) | Medir eventos rápidos, gerar PWM de alta frequência. |
+| **Alto** (ex: 256, 1024) | **Baixa** (ex: 64 µs) | **Longo** (ex: ~16.4 ms) | **Baixa** (Infrequentes) | Gerar delays longos, tarefas de baixa frequência. |
+
+> **No trabalho será escolhido o prescaler de 64, já que ele vai gerar interrupções a cada $1 ms$ usando o modo de operação de timer CTC com o OCR1A=249.**
+
+**$$Ftimer = \frac{Fcpu}{Prescaler}$$**
+
+Exemplo usando prescaler 64, que gera uma frequência de $250.000 ticks $ (clock do timer) por segundo.
+
+**$$Ftimer = \frac{16.000.000}{64} = 250.000 Hz (250 kHz) $$**
+
+### 6.3. OCRn (Modo CTC)
+
+OCRn (Output Compare Register) é um registrador usado no modo de operação do timer CTC, que atua como um teto de contagem modular. Onde o contador do timer vai contar de 0 até o valor definido em OCRn.
+
+**$$OCRn = (\frac{Fcpu}{Prescaler * Fdesejada}) - 1$$**
+
+- OCRn - valor de comparação do contador do timer
+- Fcpu - frequência da CPU
+- Prescaler - escala de tempo
+- Fdesejada - intervalo de tempo entre cada interrupção
+
+**Calculo do valor para colocar em OCRn no projeto**
+
+- Fcpu = $16 MHz$
+- Fdesejada = $1 kHz$ (interrupção do timer a cada $1 ms$)
+- Prescaler = $64$
+
+
+**$$OCRn = (\frac{Fcpu}{Prescaler * Fdesejada}) - 1 = (\frac{16.000.000}{64 * 1.000}) - 1 = (\frac{16.000.000}{64.000}) - 1 = 250 - 1 = 249$$**
+
+**$$OCRn = 249$$**
+
+
+| CSn2 | CSn1 | CSn0 | Descrição da Fonte de Clock (Prescaler) |
+| :--: | :--: | :--: | :--------------------------------------- |
+|  0   |  0   |  0   | Timer/Contador parado.                   |
+|  0   |  0   |  1   | Clock direto, sem prescaler (Divisor 1). |
+|  0   |  1   |  0   | Clock dividido por 8.                    |
+|  0   |  1   |  1   | Clock dividido por 64.                   |
+|  1   |  0   |  0   | Clock dividido por 256.                  |
+|  1   |  0   |  1   | Clock dividido por 1024.                 |
+|  1   |  1   |  0   | Fonte externa no pino T1 (borda descida).|
+|  1   |  1   |  1   | Fonte externa no pino T1 (borda subida). |
+
+Então a escolha é CSn2 = 0, CSn1 = 1, CSn0 = 0, n é o número do timer.
+
+### 6.4. Implementação de um delay no Timer0 ($8 bits$) com prescaler 64, no modo CTC com OCRn em 249
+
+```cpp
+#include <avr/interrupt.h>
+
+#define PRESCALER_64 ((1 << CS01) | (1 << CS00))
+#define TIMER0_OVERFLOW_INTERRUPT_ENABLE (1 << TOIE0)
+
+
+volatile uint32_t millis_count = 0;
+
+ISR(TIMER0_OVF_vect) {
+    millis_count++;
+}
+
+void timer0_init() {
+    TCCR0A = 0x00; // contador compara canal A
+    TCCR0B = PRESCALER_64; // prescaler 64
+    TIMSK0 = TIMER0_OVERFLOW_INTERRUPT_ENABLE;
+}
+
+void my_delay_ms(uint32_t ms) {
+    uint32_t start_time = millis_count;
+    while ((millis_count - start_time) < ms);
+}
+```
