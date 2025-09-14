@@ -49,15 +49,14 @@
 3. Eletrônica de potência e H-bridge 
     - Escolha de dispositivos: MOSFETs logic-level (N-MOS)
     - Projeto de ponte H: princípio de funcionamento (2 canais por motor para frente/reverso).
-4. Fonte, alimentação e proteções
+4. Fonte, alimentação 
     - Seleção de bateria que suporte correntes de pico e média
     - Layout de GND e importância do GND comum entre Arduino e drivers.
 5. ATmega328P — GPIO e registradores
     - Mapas de pinos: PORTB, PORTC, PORTD; 
     - como usar DDRx, PORTx, PINx.
     - Entradas digitais com pull-up internos; leitura com mascaramento de bits.
-    - Controle de enable/direction da H-bridge via pinos digitais (ex.: PORTD, PORTB).
-    - Ferramentas: avr-gcc / PlatformIO / AVRDUDE; compilação bare-metal.
+    - Controle de direction da H-bridge via pinos digitais (ex.: PORTD, PORTB).
 6. Timers e delays (sem `delay()`)
     - Timers (Timer0/Timer1/Timer2): modos Normal, CTC, Fast PWM, Phase Correct.
     - Cálculo de prescaler, OCRn, overflow e geração de timeouts/delays.
@@ -298,3 +297,63 @@ A **corrente chaveada para componentes** é um pequeno pico de corrente que comp
 Em qualquer projeto eletrônico que envolva um microcontrolador como um Arduino e componentes externos, estabelecer um aterramento adequado (GND) é fundamental para uma operação correta. <br>
 Um aterramento comum entre o Arduino e um driver é necessario, servindo como uma referência de tensão estável.
 
+## 5. ATmega328P - GPIO e registradores
+
+A manipulação direta de registradores do ATmega328P oferece um controle mais preciso e eficiente sobre os pinos de entrada/saída (GPIO) em comparação com as funções de alto nível do arduino.
+
+### 5.1. Mapas de pinos: PORTB, PORTC. PORTD
+O Atmega328P agrupa a maioria dos seus pinos de I/O em três portas de 8 bits, onde cada bit representa um pino físico.
+
+- **PORTB:** pinos digitais 8 a 13 do Arduino. Os pinos 6 e 7 de PORTB estão conectados ao cristal oscilador e geralmente não estão disponíveis para uso geral.
+- **PORTC:** pinos de entrada analógica A0 a A5; Estes podem ser usados como pinos digitais.
+- **PORTD:** pinos digitais 0 a 7 do arduino.
+
+### 5.2. DDRx, PORTx, PINx
+Cada porta de I/O (B, C ou D) é controlado por três registradores de 8 bits, onde cada bit representa um pino físico.
+
+- **DDRx (Data Direction Register):** este registrador define a direção de cada pino na porta x.
+    - O bit em 1, saída.
+    - O bit em 0, entrada.
+- **PORTx (Port Data Register):** este depende da configuração do pino em DDRx.
+    - **DDRx está com o pino como saída:** PORTx representa:
+        - O bit em 1, nível lógico do pino em alto ($5 V$).
+        - O bit em 0, nível lógico do pino em baixo ($0 V$).
+    - **DDRx está com o pino como entrada:** PORTx representa:
+        - O bit em 1, ativa o resistor de pull-up interno para aquele pino.
+        - O bit em 0, desativa o resistor de pull-up interno para aquele pino.
+- **PINx (Port Input Pins Register):** este registrador é usado para ler o estado dos pinos da porta x. A leitura dos bits deste retorna o estado lógico do pino físico em questão.
+
+
+
+
+### 5.3. Entradas digitais com pull-up internos e leitura com mascaramento de bits
+Para usar um pino como uma entrada para um sensor como uma micro-switch (que será usado no projeto), é comum usar um resistor de pull-up para garantir que a entrada tenha um estado definido como alto quando o interruptor está aberto. O ATmega328P possui resistores de pull-up inernos que poder ser ativados via software.
+
+1. Configure a direção do pino como entrada escrevendo 0 no bit correspondente em DDRx.
+2. Ative o resistor de pull-up interno escrevendo 1 no bit  correspondente em PORTx.
+
+### 5.3.1. Leitura com mascaramento de bits
+Ao ler o registrador PINx, você obtem o estados dos 8 pinos daquela porta. Para isolar a leitura de pomente um pino, a técnica de mascaramento de bits deve ser utilizada. Isso é feito com o operador lógico & (bit a bit).
+
+> Exemplo: ler o estado do pino PD2, pino digital 2 do Arduino, que está na porta D:
+
+```cpp
+if(PIND & (1 << PD2)) {
+    ...
+}
+```
+
+### 5.3.2. Controle de ativação e direção da ponte H via pinos digitais
+Para controlar uma ponte H, você manipula diretamente de registradores de pinos de portas digitais.
+
+> Exemplo: os pinos de controle de um motor estejam conectados a PD2 (rotação para frente) e PD3 (rotação para atrás):
+
+```cpp
+DDRD |= (1 << PD2) | (1 << PD3);
+PORTD |= (1 << PD2); 
+PORTD &= ~(1 << PD3);
+
+// configurei o motor x a começar a funcionar tendo rotação para frente.
+```
+
+## 6.
