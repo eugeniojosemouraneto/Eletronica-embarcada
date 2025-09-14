@@ -66,20 +66,6 @@
     - Configurar bordas de detecção (subida/descida) e habilitar globalmente (`sei()`).
     - Debounce: técnicas de hardware (RC) e software (tempo mínimo entre eventos).
     - Algoritmo de reação sugerido: sensor frontal → parar → ré X ms → girar para lado oposto Y ms.
-9. Integração, testes de robustez e documentação
-    - Plano de testes: unitário (sensor, motor), integração (comportamento robô), regressão.
-    - Execução de N repetições por cenário (ex.: 10 repetições: frente, traseira, múltiplos sensores).
-    - Testes de falha controlados: desconexão de bateria, bateria fraca, curto simulado (com segurança).
-11. Cálculos e verificações essenciais
-    - Corrente de stall \(I_{stall}\) e corrente média \(I_{médio}\) — medir para dimensionar componentes.
-    - Potência dissipada em MOSFET: \(P = I^2 \cdot R_{ds(on)}\) — calcular e dimensionar dissipador.
-    - Capacidade mínima da bateria: estimar a autonomia (Ah) com base em I_médio e tempo desejado.
-    - Cálculo de resistor de gate/base e seleção de fusível adequado.
-12. Segurança e boas-práticas
-    - Usar fusível na alimentação positiva e monitoramento térmico do driver.
-    - GND comum corretamente estabelecido; evitar loops de terra.
-    - Medir correntes com equipamento apropriado; proteções pessoais (óculos, ambiente seguro).
-    - Não deixar circuitos sem supervisão durante testes de correntes altas.
 
 # Conteudo teorico
 ## 1. Fundamentos elétricos
@@ -356,4 +342,17 @@ PORTD &= ~(1 << PD3);
 // configurei o motor x a começar a funcionar tendo rotação para frente.
 ```
 
-## 6.
+## 6. Timers e delays (sem o uso da função de alto nível delay())
+
+### 6.1. Timer no ATmega328P e seus modos de operação
+
+Os **timers** são periféricos essenciais no ATmega328P, permitindo a execução de tarefas com temporização precisa sem bloquear o processamento. Onde eles funciona como contadores que incrementam seu valor a cada pulso de clock. Quando o contador atinge um determinado valor, ele pode disparar uma interrupção ou alterar o estado de um pino de saída. Os três timers do ATmega328P são Timer0, Timer1 e Timer2, onde podem ser configurados em vários modos de operação.
+
+### 6.1.1. Modo Normal (Normal Mode)
+
+> O timer conta de 0 até o seu valor máximo (255 para timer de 8 bits (Timer0 e Timer2) ou 65535 para timer de 16 bits (Timer1)). Ao atingir o seu valor máximo ele estoura (overflow), retornando o seu valor para 0 e recomeçando este processo.
+Uma flag de interrupção de overflow (TOVx) é acionado a cada estouro, permitindo que você execulte um código especifico eem intervalos de tempo regulades.
+
+### 6.1.2. Modo CTC (Clear Timer on Compare Match)
+
+> 
