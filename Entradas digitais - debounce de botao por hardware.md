@@ -1,0 +1,55 @@
+### Projeto 1: Entradas Digitais: Debounce de Botão por Hardware
+
+- **Módulo:** Fundamentos
+- **Objetivo:** Implementar e validar um circuito de debounce de hardware usando um filtro RC e um Inversor Schmitt Trigger, e controlar uma ação via interrupção.
+- **Pré-requisitos:**
+  - Leitura de esquemáticos básicos
+  - Conceito de Interrupções
+- **Hardware Mínimo:**
+  - ATmega328P ou Arduino Uno
+  - Botão (push-button)
+  - Resistor 10kΩ, Resistor 1kΩ
+  - Capacitor cerâmico 100nF (0.1µF)
+  - Circuito Integrado 74HC14 (Inversor Schmitt Trigger Hex)
+  - LED e resistor 220Ω
+- **Tempo Estimado:** 5 horas
+- **Dificuldade:** 2/5
+- **Dependências:** Nenhuma
+- **Passos Principais (Milestones):**
+  - Montar o circuito de debounce de hardware: O botão carrega/descarrega o capacitor através de um resistor (filtro RC).
+  - A saída do filtro RC é conectada à entrada de uma das portas do 74HC14.
+  - A saída "limpa" do Schmitt Trigger é conectada ao pino de interrupção externa (INT0/INT1) do microcontrolador.
+  - Escrever uma ISR simples que apenas define um flag para indicar que o botão foi pressionado.
+  - No loop principal, verificar o flag e alternar o estado do LED.
+- **Entregáveis:**
+  - Foto do circuito montado na protoboard.
+  - Código-fonte funcional e comentado.
+  - Vídeo curto mostrando o acionamento limpo, sem repiques.
+- **Testes de Validação:**
+  - O LED deve alternar seu estado uma única vez por clique, de forma perfeitamente consistente.
+  - Observar com um osciloscópio (se disponível) o sinal ruidoso antes do Schmitt Trigger e o sinal limpo depois.
+- **Metas Avançadas (Stretch Goals):**
+  - Comparar este método com uma implementação de debounce puramente por software e analisar as diferenças no uso da CPU e na complexidade do código.
+- **Observações:** Esta abordagem resolve o problema do "bounce" no hardware, resultando em um sinal de entrada perfeito para o microcontrolador e simplificando o software.
+
+
+### Etapadas de desenvolvimento
+- Circuito de debounce
+    - Entender o repique
+    - Mini circuito 1: botão simples
+        - 1x botão
+        - 1x resistor de $10k\Omega$
+        - 1x LED
+        - 1x resistor de $200\Omega$
+        - Protoboard e cabos
+- Solução de hardware: filtro RC
+    - Entender seu funcionamento
+    - Mini circuito 2: filtro passa-baixa
+        - 1x resistor $1k\Omega$
+        - 1x capacitor cerâmica $100nF (0.1µF)$
+- Circuito de schmitt trigger
+    - Entender seu funcionamento
+    - Mini circuito 3:  integrando o schmitt trigger
+        - 1x circuito integrado 74HC14
+- Circuito final
+    - Integrar tudo com o microcontrolador
