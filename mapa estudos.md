@@ -2,7 +2,7 @@
 
 ---
 
-### Projeto 1: Entradas Digitais: Debounce de Botão por Hardware
+### Feito Projeto 1: Entradas Digitais: Debounce de Botão por Hardware
 
 - **Módulo:** Fundamentos
 - **Objetivo:** Implementar e validar um circuito de debounce de hardware usando um filtro RC e um Inversor Schmitt Trigger, e controlar uma ação via interrupção.
